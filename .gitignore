@@ -1,0 +1,68 @@
+# Avoid accidental Sketch file upload 
+###############################################
+## Please do not remove line 5 - thanks! 🙂 ##
+###############################################
+*.sketch
+
+# Avoid accidental XD or Figma upload if you convert the design file
+#######################################################
+## Please do not remove lines 11 and 12 - thanks! 🙂 ##
+#######################################################
+*.xd
+*.fig
+
+# Avoid your project being littered with annoying .DS_Store files!
+.DS_Store
+
+# Avoid accidental Node modules upload
+###############################################
+## Please do not remove this line - thanks! 🙂 ##
+###############################################
+node_modules
+
+# Avoid accidental .env upload
+###############################################
+## Please do not remove this line - thanks! 🙂 ##
+###############################################
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Build directories
+dist
+build
+out
+
+# Coverage
+coverage
+.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Temp files
+.tmp
+.temp
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

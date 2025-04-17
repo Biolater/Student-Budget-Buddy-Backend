@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BudgetPeriodType {
+  MONTHLY
+  QUARTERLY
+  SEMESTERLY
+  YEARLY
+  CUSTOM
+}
+
+model ExpenseCategory {
+  id          String    @id
+  name        String    @unique
+  icon        String
+  expenses    Expense[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  description String?
+
+  @@map("expense_categories")
+}
+
+model BudgetCategory {
+  id          String   @id
+  name        String   @unique
+  icon        String
+  budgets     Budget[]
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("budget_categories")
+}
+
+model User {
+  id             String    @id
+  email          String    @unique
+  username       String    @unique
+  expenses       Expense[]
+  budgets        Budget[]
+  baseCurrency   Currency  @relation(fields: [baseCurrencyId], references: [id])
+  baseCurrencyId String    @default("usd-id")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Currency {
+  id        String    @id
+  name      String
+  symbol    String
+  code      String    @unique
+  users     User[]
+  budgets   Budget[]
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("currencies")
+}
+
+model Expense {
+  id                String          @id @default(uuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  date              DateTime
+  amount            Decimal
+  currencyId        String
+  currency          Currency        @relation(fields: [currencyId], references: [id])
+  budgetId          String?
+  budget            Budget?         @relation(fields: [budgetId], references: [id])
+  expenseCategoryId String
+  category          ExpenseCategory @relation(fields: [expenseCategoryId], references: [id])
+  description       String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([expenseCategoryId])
+}
+
+model Budget {
+  id               String           @id @default(uuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgetCategoryId String
+  category         BudgetCategory   @relation(fields: [budgetCategoryId], references: [id])
+  currencyId       String
+  currency         Currency         @relation(fields: [currencyId], references: [id])
+  amount           Decimal
+  periodType       BudgetPeriodType
+  description      String?
+  expenses         Expense[]
+  startDate        DateTime
+  endDate          DateTime
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([userId, budgetCategoryId, startDate, endDate])
+  @@index([userId])
+  @@index([budgetCategoryId])
+}

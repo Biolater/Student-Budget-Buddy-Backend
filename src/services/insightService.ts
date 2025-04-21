@@ -20,6 +20,7 @@ export class InsightService {
           user: true,
         },
       });
+
       if (!budget) {
         throw new Error("Budget not found");
       }

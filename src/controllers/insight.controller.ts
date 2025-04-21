@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import { InsightService } from "../services/insightService";
 
 // Controller function to fetch insights for a budget
-export const getInsights = async (req: Request, res: Response): Promise<void> => {
+export const getInsights = async (req: Request, res: Response) => {
   try {
-    const { budgetId } = req.params;
+    const { budgetId } = req.params;``
     const insights = await InsightService.getBudgetInsights(budgetId);
     res.json(insights);
   } catch (error) {

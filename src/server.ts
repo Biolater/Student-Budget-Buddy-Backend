@@ -20,7 +20,9 @@ app.use(
   })
 );
 
-app.use("/insights", insightRouter);
+app.use("/api/v1/insights", insightRouter);
+
+
 
 app.use(errorMiddleware);
 

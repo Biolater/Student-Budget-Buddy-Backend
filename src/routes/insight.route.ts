@@ -1,6 +1,6 @@
 import { NextFunction, Router, Request, Response } from "express";
 import { asyncHandler } from "../asyncHandler";
-import { getInsights } from "../controllers/insight.controller";
+import { getInsights, getSpendingSummary } from "../controllers/insight.controller";
 import { getAuth } from "@clerk/express";
 import { errorResponse } from "../utils/response";
 
@@ -21,6 +21,12 @@ insightRouter.get(
   "/budget/:budgetId",
   asyncHandler(checkAuth),
   asyncHandler(getInsights)
+);
+
+insightRouter.get(
+  "/spending-summary/",
+  asyncHandler(checkAuth),
+  asyncHandler(getSpendingSummary)
 );
 
 export default insightRouter;

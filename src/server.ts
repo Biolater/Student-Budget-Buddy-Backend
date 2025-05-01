@@ -23,7 +23,6 @@ app.use(
 app.use("/api/v1/insights", insightRouter);
 
 
-
 app.use(errorMiddleware);
 
 app.listen(port, () => {

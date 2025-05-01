@@ -20,3 +20,24 @@ export const getInsights = async (
     next(error);
   }
 };
+
+export const getSpendingSummary = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { budgetId } = req.params;
+
+    const { startDate, endDate } = req.query;
+
+    const insights = await InsightService.getBudgetInsights(budgetId);
+    if (!insights) {
+      throw new ApiError(404, "Budget not found");
+    }
+    res.json(successResponse(insights));
+  } catch (error) {
+    next(error);
+  }
+};
+

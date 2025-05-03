@@ -81,7 +81,7 @@ model Expense {
   currencyId        String
   currency          Currency        @relation(fields: [currencyId], references: [id])
   budgetId          String?
-  budget            Budget?         @relation(fields: [budgetId], references: [id])
+  budget            Budget?         @relation(fields: [budgetId], references: [id], onDelete: SetNull)
   expenseCategoryId String
   category          ExpenseCategory @relation(fields: [expenseCategoryId], references: [id])
   description       String?

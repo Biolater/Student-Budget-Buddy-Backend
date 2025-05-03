@@ -19,8 +19,8 @@ const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
 
 insightRouter.get(
   "/budget/:budgetId",
-  asyncHandler(checkAuth),
-  asyncHandler(getInsights)
+/*   asyncHandler(checkAuth),
+ */  asyncHandler(getInsights)
 );
 
 insightRouter.get(

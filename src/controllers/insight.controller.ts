@@ -9,12 +9,18 @@ export const getInsights = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { budgetId } = req.params;
-  const insights = await InsightService.getBudgetInsights(budgetId);
-  if (!insights) {
-    throw new ApiError(404, "Budget not found");
+  try {
+    const { budgetId } = req.params;
+    // @ts-ignore - Bypassing TypeScript error for auth property
+    const userId = req?.auth?.userId!;
+    const insights = await InsightService.getBudgetInsights(budgetId, userId);
+    if (!insights) {
+      throw new ApiError(404, "Budget not found");
+    }
+    res.json(successResponse(insights));
+  } catch (error) {
+    next(error);
   }
-  res.json(successResponse(insights));
 };
 
 export const getSpendingSummary = async (
@@ -22,13 +28,17 @@ export const getSpendingSummary = async (
   res: Response,
   next: NextFunction
 ) => {
+  try {
     const { budgetId } = req.params;
-
     const { startDate, endDate } = req.query;
-
-    const insights = await InsightService.getBudgetInsights(budgetId);
+    // @ts-ignore - Bypassing TypeScript error for auth property
+    const userId = req?.auth?.userId!;
+    const insights = await InsightService.getBudgetInsights(budgetId, userId);
     if (!insights) {
       throw new ApiError(404, "Budget not found");
     }
     res.json(successResponse(insights));
-  } 
+  } catch (error) {
+    next(error);
+  }
+};

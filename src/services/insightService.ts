@@ -3,9 +3,9 @@ import prisma from "../prisma";
 import { ApiError } from "../utils/ApiError";
 
 export class InsightService {
-  static async getBudgetInsights(budgetId: string) {
+  static async getBudgetInsights(budgetId: string, userId: string) {
     const budget = await prisma.budget.findUnique({
-      where: { id: budgetId },
+      where: { id: budgetId, userId },
       include: {
         expenses: { include: { currency: true } },
         category: true,
@@ -24,9 +24,9 @@ export class InsightService {
         expense.currency.code === budget.currency.code
           ? 1
           : await getConversionRate(
-              expense.currency.code,
-              budget.currency.code
-            );
+            expense.currency.code,
+            budget.currency.code
+          );
       totalSpent += expense.amount.toNumber() * conversionRate;
     }
 
@@ -36,14 +36,14 @@ export class InsightService {
       spendingPercentage < 50
         ? "safe"
         : spendingPercentage < 75
-        ? "warning"
-        : "danger";
+          ? "warning"
+          : "danger";
 
     const daysPassed = Math.max(
       1,
       Math.floor(
-        (new Date().getTime() - new Date(budget.createdAt).getTime()) /
-          (1000 * 60 * 60 * 24)
+        (new Date().getTime() - new Date(budget.startDate).getTime()) /
+        (1000 * 60 * 60 * 24)
       )
     );
     const dailyAverage = totalSpent / daysPassed;
@@ -51,8 +51,8 @@ export class InsightService {
       1,
       Math.floor(
         (new Date(budget.endDate).getTime() -
-          new Date(budget.createdAt).getTime()) /
-          (1000 * 60 * 60 * 24)
+          new Date(budget.startDate).getTime()) /
+        (1000 * 60 * 60 * 24)
       )
     );
     const targetDailyAverage = budget.amount.toNumber() / budgetDurationDays;

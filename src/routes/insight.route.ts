@@ -1,6 +1,9 @@
 import { NextFunction, Router, Request, Response } from "express";
 import { asyncHandler } from "../asyncHandler";
-import { getInsights, getSpendingSummary } from "../controllers/insight.controller";
+import {
+  getInsights,
+  getSpendingSummary,
+} from "../controllers/insight.controller";
 import { getAuth } from "@clerk/express";
 import { errorResponse } from "../utils/response";
 
@@ -10,7 +13,7 @@ const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
   const { userId } = getAuth(req);
 
   if (!userId) {
-    res.status(401).json(errorResponse(401, "User not authenticated"));
+    res.status(401).json(errorResponse(401, "User is not authenticated"));
     return;
   }
 
@@ -19,8 +22,8 @@ const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
 
 insightRouter.get(
   "/budget/:budgetId",
-/*   asyncHandler(checkAuth),
- */  asyncHandler(getInsights)
+  asyncHandler(checkAuth),
+  asyncHandler(getInsights)
 );
 
 insightRouter.get(

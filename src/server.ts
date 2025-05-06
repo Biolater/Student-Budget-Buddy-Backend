@@ -1,16 +1,25 @@
 // src/server.ts
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import openai from "./openai";
 import prisma from "./prisma";
 import insightRouter from "./routes/insight.route";
 import { clerkMiddleware } from "@clerk/express";
 import { errorMiddleware } from "./middlewares/error.middleware";
+import cors from "cors"; // Import cors
+
 dotenv.config();
 
 const app = express();
 const port = 3001;
 
+// CORS Configuration
+const corsOptions = {
+  origin: "http://localhost:3000", // Allow frontend origin
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+app.use(cors(corsOptions)); // Use cors middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -21,7 +30,6 @@ app.use(
 );
 
 app.use("/api/v1/insights", insightRouter);
-
 
 app.use(errorMiddleware);
 

@@ -7,6 +7,7 @@ import insightRouter from "./routes/insight.route";
 import { clerkMiddleware } from "@clerk/express";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import cors from "cors"; // Import cors
+import dashboardRouter from "./routes/dashboard.route";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use(
 );
 
 app.use("/api/v1/insights", insightRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
 
 app.use(errorMiddleware);
 

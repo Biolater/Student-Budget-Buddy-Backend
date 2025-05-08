@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { InsightService } from "../services/insightService";
+import { InsightService } from "../services/insight.service";
 import { ApiError } from "../utils/ApiError";
 import { successResponse } from "../utils/response";
+import { getAuth } from "@clerk/express";
 
 // Controller function to fetch insights for a budget
 export const getInsights = async (
@@ -11,8 +12,12 @@ export const getInsights = async (
 ) => {
   try {
     const { budgetId } = req.params;
-    // @ts-ignore - Bypassing TypeScript error for auth property
-    const userId = req?.auth?.userId!;
+   
+    const { userId } = getAuth(req);
+    if (!userId) {
+      throw new ApiError(401, "User is not authenticated");
+    }
+    
     const insights = await InsightService.getBudgetInsights(budgetId, userId);
     if (!insights) {
       throw new ApiError(404, "Budget not found");
@@ -31,8 +36,12 @@ export const getSpendingSummary = async (
   try {
     const { budgetId } = req.params;
     const { startDate, endDate } = req.query;
-    // @ts-ignore - Bypassing TypeScript error for auth property
-    const userId = req?.auth?.userId!;
+    
+    const { userId } = getAuth(req);
+    if (!userId) {
+      throw new ApiError(401, "User is not authenticated");
+    }
+    
     const insights = await InsightService.getBudgetInsights(budgetId, userId);
     if (!insights) {
       throw new ApiError(404, "Budget not found");

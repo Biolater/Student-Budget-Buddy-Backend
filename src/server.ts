@@ -16,7 +16,10 @@ const port = 3001;
 
 // CORS Configuration
 const corsOptions = {
-  origin: "http://localhost:3000", // Allow frontend origin
+  origin: [
+    "http://localhost:3000",
+    "https://student-bugdet-buddy-lyje.vercel.app",
+  ], // Allow multiple origins
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 

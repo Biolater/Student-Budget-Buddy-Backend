@@ -1,6 +1,9 @@
 import { getConversionRate } from "../actions/budget.actions";
 import prisma from "../prisma";
-import { GetDashboardSummaryParams } from "../types/dashboard.types";
+import {
+  GetDashboardSummaryParams,
+  GetSpendingTrendsParams,
+} from "../types/dashboard.types";
 import { ApiError } from "../utils/ApiError";
 
 export class DashboardService {
@@ -100,5 +103,86 @@ export class DashboardService {
       remainingFunds,
       savings,
     };
+  };
+  static getSpendingTrends = async (params: GetSpendingTrendsParams) => {
+    const { timePeriod, userId } = params;
+    let startDate = undefined;
+    let endDate = undefined;
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        baseCurrency: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const defaultCurrency = user.baseCurrency.code || "USD";
+
+    if (timePeriod === "last6Months") {
+      startDate = new Date(
+        new Date().getFullYear(),
+        new Date().getMonth() - 6,
+        1
+      );
+      endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    } else if (timePeriod === "currentYear") {
+      startDate = new Date(new Date().getFullYear(), 0, 1);
+      endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    }
+
+    const expenses = await prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+        userId,
+      },
+      include: {
+        currency: true,
+      },
+    });
+
+    const transformedExpenses = await Promise.all(
+      expenses.map(async (expense) => {
+        let amount = expense.amount.toNumber();
+        if (expense.currency.code !== defaultCurrency) {
+          amount *= await getConversionRate(
+            expense.currency.code,
+            defaultCurrency
+          );
+        }
+        return {
+          ...expense,
+          amount,
+        };
+      })
+    );
+
+    interface trendLine {
+      month: string;
+      totalSpending: number;
+    }
+
+    const groupedExpenses = transformedExpenses.reduce((acc, expense) => {
+      const month = expense.date.getMonth();
+      const year = expense.date.getFullYear();
+      const key = `${year}-${month}`;
+      const existingMonth = acc.find((line) => line.month === key);
+      if (existingMonth) {
+        existingMonth.totalSpending += expense.amount;
+      } else {
+        acc.push({ month: key, totalSpending: expense.amount });
+      }
+      return acc;
+    }, [] as trendLine[]);
+
+    return groupedExpenses
   };
 }

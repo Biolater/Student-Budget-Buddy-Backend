@@ -4,6 +4,7 @@ import { getAuth } from "@clerk/express";
 import { errorResponse } from "../utils/response";
 import checkAuth from "../utils/auth.utils";
 import {
+  getSpendingByCategory,
   getSpendingTrends,
   getSummary,
 } from "../controllers/dashboard.controller";
@@ -18,8 +19,14 @@ dashboardRouter.get(
 
 dashboardRouter.get(
   "/spending-trends",
-  asyncHandler(checkAuth),  
+  asyncHandler(checkAuth),
   asyncHandler(getSpendingTrends)
+);
+
+dashboardRouter.get(
+  "/spending-by-category",
+  asyncHandler(checkAuth),
+  asyncHandler(getSpendingByCategory)
 );
 
 export default dashboardRouter;

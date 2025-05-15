@@ -1,9 +1,6 @@
 type TimePeriod = "currentMonth" | "previousMonth" | "allTime";
 
-type SpendingTrendTimePeriod =
-  | "last6Months"
-  | "currentYear"
-  | "allTime";
+type SpendingTrendTimePeriod = "last6Months" | "currentYear" | "allTime";
 
 interface GetDashboardSummaryParams {
   userId: string;
@@ -15,4 +12,15 @@ interface GetSpendingTrendsParams {
   timePeriod: SpendingTrendTimePeriod;
 }
 
-export type { GetDashboardSummaryParams, TimePeriod, SpendingTrendTimePeriod, GetSpendingTrendsParams };
+interface GetSpendingByCategoryParams {
+  userId: string;
+  timePeriod: TimePeriod;
+}
+
+export type {
+  GetDashboardSummaryParams,
+  TimePeriod,
+  SpendingTrendTimePeriod,
+  GetSpendingTrendsParams,
+  GetSpendingByCategoryParams,
+};

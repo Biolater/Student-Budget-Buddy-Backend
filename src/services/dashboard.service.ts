@@ -1,7 +1,8 @@
 import { getConversionRate } from "../actions/budget.actions";
 import prisma from "../prisma";
-import {
+import type {
   GetDashboardSummaryParams,
+  GetSpendingByCategoryParams,
   GetSpendingTrendsParams,
 } from "../types/dashboard.types";
 import { ApiError } from "../utils/ApiError";
@@ -171,7 +172,7 @@ export class DashboardService {
     }
 
     const groupedExpenses = transformedExpenses.reduce((acc, expense) => {
-      const month = expense.date.getMonth();
+      const month = expense.date.getMonth() + 1;
       const year = expense.date.getFullYear();
       const key = `${year}-${month}`;
       const existingMonth = acc.find((line) => line.month === key);
@@ -183,6 +184,98 @@ export class DashboardService {
       return acc;
     }, [] as trendLine[]);
 
-    return groupedExpenses
+    return groupedExpenses;
+  };
+  static getSpendingByCategory = async (
+    params: GetSpendingByCategoryParams
+  ) => {
+    const { userId, timePeriod } = params;
+    if (!userId) {
+      throw new ApiError(401, "User is not authenticated");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        baseCurrency: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const defaultCurrency = user.baseCurrency.code || "USD";
+
+    let startDate = undefined;
+    let endDate = undefined;
+
+    if (timePeriod === "currentMonth") {
+      startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      endDate = new Date(
+        new Date().getFullYear(),
+        new Date().getMonth() + 1,
+        1
+      );
+    } else if (timePeriod === "previousMonth") {
+      startDate = new Date(
+        new Date().getFullYear(),
+        new Date().getMonth() - 1,
+        1
+      );
+      endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    } else if (timePeriod === "allTime") {
+      startDate = undefined;
+      endDate = undefined;
+    }
+
+    const expenses = await prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+        userId,
+      },
+      include: {
+        category: true,
+        currency: true,
+      },
+    });
+
+    const transformedExpenses = await Promise.all(
+      expenses.map(async (expense) => {
+        let amount = expense.amount.toNumber();
+        if (expense.currency.code !== defaultCurrency) {
+          amount *= await getConversionRate(
+            expense.currency.code,
+            defaultCurrency
+          );
+        }
+        return {
+          ...expense,
+          amount,
+        };
+      })
+    );
+
+    const groupedExpenses = transformedExpenses.reduce((acc, expense) => {
+      const existingCategory = acc.find(
+        (line) => line.category === expense.category.name
+      );
+      if (existingCategory) {
+        existingCategory.totalSpending += expense.amount;
+      } else {
+        acc.push({
+          category: expense.category.name,
+          totalSpending: expense.amount,
+        });
+      }
+      return acc;
+    }, [] as { category: string; totalSpending: number }[]);
+
+    return groupedExpenses;
   };
 }

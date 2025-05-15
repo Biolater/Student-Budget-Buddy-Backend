@@ -50,3 +50,26 @@ export const getSpendingTrends = async (
     next(error);
   }
 };
+
+export const getSpendingByCategory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userId } = getAuth(req);
+    const { timePeriod } = req.query;
+    if (!userId) {
+      throw new ApiError(401, "User is not authenticated");
+    }
+
+    const spendingByCategory = await DashboardService.getSpendingByCategory({
+      userId,
+      timePeriod: timePeriod as TimePeriod,
+    });
+
+    res.json(successResponse(spendingByCategory));
+  } catch (error) {
+    next(error);
+  }
+};

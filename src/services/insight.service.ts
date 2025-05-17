@@ -24,9 +24,9 @@ export class InsightService {
         expense.currency.code === budget.currency.code
           ? 1
           : await getConversionRate(
-            expense.currency.code,
-            budget.currency.code
-          );
+              expense.currency.code,
+              budget.currency.code
+            );
       totalSpent += expense.amount.toNumber() * conversionRate;
     }
 
@@ -36,25 +36,39 @@ export class InsightService {
       spendingPercentage < 50
         ? "safe"
         : spendingPercentage < 75
-          ? "warning"
-          : "danger";
+        ? "warning"
+        : "danger";
 
+    // Ensure we have proper Date objects
+    const startDate = new Date(budget.startDate);
+    const endDate = new Date(budget.endDate);
+    const now = new Date();
+
+    // Calculate the number of days that have passed within the budget period so far.
+    // We take the minimum of the current date and the budget's end date to avoid
+    // counting days beyond the budget's intended duration. We add 1 to include
+    // both the start and (potentially) end date in the count.
     const daysPassed = Math.max(
       1,
       Math.floor(
-        (new Date().getTime() - new Date(budget.startDate).getTime()) /
-        (1000 * 60 * 60 * 24)
-      )
+        (Math.min(now.getTime(), endDate.getTime()) - startDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      ) + 1
     );
-    const dailyAverage = totalSpent / daysPassed;
+
+    // Calculate the total duration of the budget in days.
     const budgetDurationDays = Math.max(
       1,
       Math.floor(
-        (new Date(budget.endDate).getTime() -
-          new Date(budget.startDate).getTime()) /
-        (1000 * 60 * 60 * 24)
-      )
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1
     );
+
+    // Daily Average: The average amount spent per day so far in the budget period.
+    const dailyAverage = totalSpent / daysPassed;
+
+    // Target Daily Average: The average amount you should aim to spend per day
+    // to stay within your total budget for the entire budget duration.
     const targetDailyAverage = budget.amount.toNumber() / budgetDurationDays;
 
     let tip;

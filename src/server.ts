@@ -36,7 +36,20 @@ app.use(
 app.use("/api/v1/insights", insightRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 
-app.use(errorMiddleware);
+// Add a catch-all route handler to catch 404 errors
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    data: null,
+    error: {
+      code: 404,
+      message: "Route not found"
+    }
+  });
+});
+
+// Error handler must be registered last, and Express recognizes it by the 4 parameters
+app.use(errorMiddleware as express.ErrorRequestHandler);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

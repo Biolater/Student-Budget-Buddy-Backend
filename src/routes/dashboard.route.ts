@@ -7,6 +7,7 @@ import {
   getSpendingByCategory,
   getSpendingTrends,
   getSummary,
+  getUpcomingFinancialEvents,
 } from "../controllers/dashboard.controller";
 
 const dashboardRouter = Router();
@@ -27,6 +28,12 @@ dashboardRouter.get(
   "/spending-by-category",
   asyncHandler(checkAuth),
   asyncHandler(getSpendingByCategory)
+);
+
+dashboardRouter.get(
+  "/financial-events/upcoming",
+  asyncHandler(checkAuth),
+  asyncHandler(getUpcomingFinancialEvents)
 );
 
 export default dashboardRouter;

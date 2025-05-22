@@ -4,8 +4,10 @@ import type {
   GetDashboardSummaryParams,
   GetSpendingByCategoryParams,
   GetSpendingTrendsParams,
+  GetUpcomingFinancialEventsParams,
 } from "../types/dashboard.types";
 import { ApiError } from "../utils/ApiError";
+import { DateTime } from "luxon"; // Ensure luxon is installed and imported
 
 export class DashboardService {
   static getSummary = async (params: GetDashboardSummaryParams) => {
@@ -277,5 +279,62 @@ export class DashboardService {
     }, [] as { category: string; totalSpending: number }[]);
 
     return groupedExpenses;
+  };
+  static getUpcomingFinancialEvents = async (
+    params: GetUpcomingFinancialEventsParams
+  ) => {
+    const { userId, limit, daysAhead, isActive } = params;
+
+    const now = DateTime.now().toUTC(); // Current UTC date and time
+    const futureDate = now.plus({ days: daysAhead }).toUTC(); // Date 'daysAhead' from now
+
+    try {
+      const events = await prisma.financialEvent.findMany({
+        where: {
+          userId: userId,
+          nextDueDate: {
+            gte: now.startOf("day").toISO(), // Start of today (UTC)
+            lte: futureDate.endOf("day").toISO(), // End of the target future date (UTC)
+          },
+          isActive: isActive, // Use the validated boolean directly
+        },
+        include: {
+          currency: {
+            select: {
+              code: true,
+              symbol: true,
+            },
+          },
+          budgetCategory: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          nextDueDate: "asc", // Order by the nearest upcoming date first
+        },
+        take: limit, // Apply the limit
+      });
+
+      const formattedEvents = events.map((event) => ({
+        ...event,
+        amount: event.amount.toNumber(),
+      }));
+
+      return formattedEvents;
+    } catch (error: any) {
+      console.error(
+        `Error in DashboardService.getUpcomingFinancialEvents:`,
+        error
+      );
+      throw new ApiError(
+        500,
+        `Failed to fetch upcoming financial events: ${
+          error.message || "Unknown error"
+        }`
+      );
+    }
   };
 }

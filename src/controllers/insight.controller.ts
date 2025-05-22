@@ -12,12 +12,12 @@ export const getInsights = async (
 ) => {
   try {
     const { budgetId } = req.params;
-   
+
     const { userId } = getAuth(req);
     if (!userId) {
       throw new ApiError(401, "User is not authenticated");
     }
-    
+
     const insights = await InsightService.getBudgetInsights(budgetId, userId);
     if (!insights) {
       throw new ApiError(404, "Budget not found");
@@ -35,13 +35,12 @@ export const getSpendingSummary = async (
 ) => {
   try {
     const { budgetId } = req.params;
-    const { startDate, endDate } = req.query;
-    
+
     const { userId } = getAuth(req);
     if (!userId) {
       throw new ApiError(401, "User is not authenticated");
     }
-    
+
     const insights = await InsightService.getBudgetInsights(budgetId, userId);
     if (!insights) {
       throw new ApiError(404, "Budget not found");

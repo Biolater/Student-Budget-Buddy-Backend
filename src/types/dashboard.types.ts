@@ -17,10 +17,18 @@ interface GetSpendingByCategoryParams {
   timePeriod: TimePeriod;
 }
 
+interface GetUpcomingFinancialEventsParams {
+  userId: string;
+  limit: number;
+  daysAhead: number;
+  isActive: boolean | undefined;
+}
+
 export type {
   GetDashboardSummaryParams,
   TimePeriod,
   SpendingTrendTimePeriod,
   GetSpendingTrendsParams,
   GetSpendingByCategoryParams,
+  GetUpcomingFinancialEventsParams,
 };

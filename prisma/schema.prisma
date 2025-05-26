@@ -139,21 +139,34 @@ model Budget {
 }
 
 model FinancialEvent {
-  id               String                  @id @default(uuid())
-  userId           String
-  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name             String
-  nextDueDate      DateTime
-  amount           Decimal
-  description      String?
-  currencyId       String
-  currency         Currency                @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  nextDueDate DateTime
+  amount      Decimal
+  description String?
+
+  currencyId String
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
   budgetCategoryId String?
-  budgetCategory   BudgetCategory?         @relation(fields: [budgetCategoryId], references: [id], onDelete: SetNull)
-  frequency        FinancialEventFrequency
-  isActive         Boolean                 @default(true)
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
+  budgetCategory   BudgetCategory? @relation(fields: [budgetCategoryId], references: [id], onDelete: SetNull)
+
+  frequency FinancialEventFrequency
+  interval  Int @default(1)
+  type      FinancialEventType
+
+  rrule          String?
+  rruleStartDate DateTime?
+  labelFriendly  String?
+
+  lastProcessedAt DateTime?
+  isActive        Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([currencyId])

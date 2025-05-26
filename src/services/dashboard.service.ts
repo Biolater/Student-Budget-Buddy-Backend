@@ -4,7 +4,7 @@ import type {
   GetDashboardSummaryParams,
   GetSpendingByCategoryParams,
   GetSpendingTrendsParams,
-  GetUpcomingFinancialEventsParams,
+GetUpcomingFinancialEventsParams,
 } from "../types/dashboard.types";
 import { ApiError } from "../utils/ApiError";
 import { DateTime } from "luxon"; // Ensure luxon is installed and imported

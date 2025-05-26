@@ -140,6 +140,63 @@ Returns spending breakdown by categories for the specified time period.
 }
 ```
 
+### Get Upcoming Financial Events
+
+Returns a list of upcoming financial events for the authenticated user.
+
+**Endpoint:** `GET /dashboard/financial-events/upcoming`
+
+**Query Parameters:**
+- `limit` (optional): Maximum number of events to return.
+  - Default: `5`
+- `daysAhead` (optional): How many days in the future to look for events.
+  - Default: `30`
+- `isActive` (optional): Whether to return only active events.
+  - Values: `true`, `false`
+  - Default: `true`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Rent Payment",
+      "amount": 1200,
+      "nextDueDate": "2023-06-01T00:00:00.000Z",
+      "recurrenceType": "MONTHLY",
+      "isActive": true,
+      "currency": {
+        "code": "USD",
+        "symbol": "$"
+      },
+      "budgetCategory": {
+        "id": "abc123",
+        "name": "Housing"
+      }
+    },
+    {
+      "id": "223e4567-e89b-12d3-a456-426614174001",
+      "name": "Internet Bill",
+      "amount": 75,
+      "nextDueDate": "2023-06-05T00:00:00.000Z",
+      "recurrenceType": "MONTHLY",
+      "isActive": true,
+      "currency": {
+        "code": "USD",
+        "symbol": "$"
+      },
+      "budgetCategory": {
+        "id": "def456",
+        "name": "Utilities"
+      }
+    }
+  ]
+}
+```
+
 ## Insight API
 
 ### Get Budget Insights

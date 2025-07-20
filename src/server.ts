@@ -8,6 +8,7 @@ import { clerkMiddleware } from "@clerk/express";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import cors from "cors"; // Import cors
 import dashboardRouter from "./routes/dashboard.route";
+import assistantRouter from "./routes/assistant.route";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use(
 
 app.use("/api/v1/insights", insightRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/ai/assistant", assistantRouter)
 
 // Add a catch-all route handler to catch 404 errors
 app.use((req: Request, res: Response) => {

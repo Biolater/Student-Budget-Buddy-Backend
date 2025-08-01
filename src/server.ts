@@ -36,10 +36,17 @@ app.use(
 
 app.use("/api/v1/insights", insightRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
-app.use("/api/v1/ai/assistant", assistantRouter)
+app.use("/api/v1/ai/assistant", assistantRouter);
+app.get("/api/ping", (_, res) => {
+  res.status(200).json({
+    success: true,
+    data: "pong",
+    error: null,
+  });
+});
 
 // Add a catch-all route handler to catch 404 errors
-app.use((req: Request, res: Response) => {
+app.use((_, res: Response) => {
   res.status(404).json({
     success: false,
     data: null,

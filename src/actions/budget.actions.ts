@@ -7,7 +7,7 @@ type ConversionRateResponse = {
 export async function getConversionRate(
   baseCurrency: string,
   targetCurrency: string
-) {
+): Promise<number> {
   const maxRetries = 3;
   const timeoutMs = 10000; // 10 seconds
   
@@ -56,4 +56,7 @@ export async function getConversionRate(
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
+  
+  // This should never be reached, but TypeScript requires it
+  throw new Error("Unexpected error: All retry attempts failed");
 }

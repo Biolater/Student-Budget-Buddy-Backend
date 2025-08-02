@@ -20,13 +20,15 @@ export class InsightService {
 
     let totalSpent = 0;
     for (const expense of budget.expenses) {
-      const conversionRate =
-        expense.currency.code === budget.currency.code
-          ? 1
-          : await getConversionRate(
-              expense.currency.code,
-              budget.currency.code
-            );
+      let conversionRate: number;
+      if (expense.currency.code === budget.currency.code) {
+        conversionRate = 1;
+      } else {
+        conversionRate = await getConversionRate(
+          expense.currency.code,
+          budget.currency.code
+        );
+      }
       totalSpent += expense.amount.toNumber() * conversionRate;
     }
 

@@ -81,9 +81,8 @@ export class DashboardService {
       if (budget.currency.code === defaultCurrency) {
         totalBudget += budget.amount.toNumber();
       } else {
-        totalBudget +=
-          budget.amount.toNumber() *
-          (await getConversionRate(budget.currency.code, defaultCurrency));
+        const conversionRate = await getConversionRate(budget.currency.code, defaultCurrency);
+        totalBudget += budget.amount.toNumber() * conversionRate;
       }
     }
 
@@ -91,9 +90,8 @@ export class DashboardService {
       if (expense.currency.code === defaultCurrency) {
         totalExpenses += expense.amount.toNumber();
       } else {
-        totalExpenses +=
-          expense.amount.toNumber() *
-          (await getConversionRate(expense.currency.code, defaultCurrency));
+        const conversionRate = await getConversionRate(expense.currency.code, defaultCurrency);
+        totalExpenses += expense.amount.toNumber() * conversionRate;
       }
     }
 
@@ -156,10 +154,11 @@ export class DashboardService {
       expenses.map(async (expense) => {
         let amount = expense.amount.toNumber();
         if (expense.currency.code !== defaultCurrency) {
-          amount *= await getConversionRate(
+          const conversionRate = await getConversionRate(
             expense.currency.code,
             defaultCurrency
           );
+          amount *= conversionRate;
         }
         return {
           ...expense,
@@ -251,10 +250,11 @@ export class DashboardService {
       expenses.map(async (expense) => {
         let amount = expense.amount.toNumber();
         if (expense.currency.code !== defaultCurrency) {
-          amount *= await getConversionRate(
+          const conversionRate = await getConversionRate(
             expense.currency.code,
             defaultCurrency
           );
+          amount *= conversionRate;
         }
         return {
           ...expense,

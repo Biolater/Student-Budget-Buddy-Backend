@@ -4,6 +4,17 @@ type ConversionRateResponse = {
   conversion_rates: Record<string, number>;
 };
 
+// Cache for conversion rates to avoid multiple API calls
+const conversionCache = new Map<string, number>();
+const cacheExpiry = new Map<string, number>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Track if API is failing to avoid repeated calls
+let apiFailureCount = 0;
+const MAX_API_FAILURES = 3;
+let lastApiFailure = 0;
+const API_COOLDOWN = 60 * 1000; // 1 minute cooldown after failures
+
 // Fallback exchange rates (approximate values)
 const FALLBACK_RATES: Record<string, Record<string, number>> = {
   USD: {
@@ -28,6 +39,12 @@ const FALLBACK_RATES: Record<string, Record<string, number>> = {
     TRY: 32.4,
     AZN: 2.0,
   },
+  AZN: {
+    USD: 0.59,
+    EUR: 0.50,
+    GBP: 0.43,
+    TRY: 16.2,
+  },
   // Add more base currencies as needed
 };
 
@@ -35,6 +52,7 @@ export async function getConversionRate(
   baseCurrency: string,
   targetCurrency: string
 ): Promise<number> {
+  const cacheKey = `${baseCurrency}-${targetCurrency}`;
   console.log(`🔄 getConversionRate called with: baseCurrency='${baseCurrency}', targetCurrency='${targetCurrency}'`);
   
   // If same currency, return 1
@@ -43,13 +61,36 @@ export async function getConversionRate(
     return 1;
   }
 
+  // Check cache first
+  const cachedRate = conversionCache.get(cacheKey);
+  const cacheTime = cacheExpiry.get(cacheKey);
+  if (cachedRate && cacheTime && Date.now() < cacheTime) {
+    console.log(`💾 Using cached rate: ${cachedRate}`);
+    return cachedRate;
+  }
+
+  // Check if we should skip API due to recent failures
+  const now = Date.now();
+  if (apiFailureCount >= MAX_API_FAILURES && (now - lastApiFailure) < API_COOLDOWN) {
+    console.log(`⚠️ API in cooldown due to failures, using fallback`);
+    const fallbackRate = getFallbackRate(baseCurrency, targetCurrency);
+    // Cache the fallback rate briefly
+    conversionCache.set(cacheKey, fallbackRate);
+    cacheExpiry.set(cacheKey, now + (CACHE_DURATION / 10)); // Shorter cache for fallback
+    return fallbackRate;
+  }
+
   // Check if API key is available
   if (!process.env.EXCHANGE_RATES_API_KEY) {
-    console.warn("EXCHANGE_RATES_API_KEY not found, using fallback rates");
-    return getFallbackRate(baseCurrency, targetCurrency);
+    console.log(`🔑 No API key, using fallback rates`);
+    const fallbackRate = getFallbackRate(baseCurrency, targetCurrency);
+    conversionCache.set(cacheKey, fallbackRate);
+    cacheExpiry.set(cacheKey, now + CACHE_DURATION);
+    return fallbackRate;
   }
 
   try {
+    console.log(`🌐 Fetching from API...`);
     const response = await fetch(
       `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATES_API_KEY}/latest/${baseCurrency}`,
       {
@@ -58,21 +99,39 @@ export async function getConversionRate(
     );
 
     if (!response.ok) {
-      console.warn(`API request failed: ${response.status}, using fallback rates`);
-      return getFallbackRate(baseCurrency, targetCurrency);
+      throw new Error(`API returned ${response.status}`);
     }
 
     const data: ConversionRateResponse = await response.json();
     
     if (!data.conversion_rates || !data.conversion_rates[targetCurrency]) {
-      console.warn(`Conversion rate not found for ${targetCurrency}, using fallback`);
-      return getFallbackRate(baseCurrency, targetCurrency);
+      throw new Error(`Rate not found for ${targetCurrency}`);
     }
 
-    return data.conversion_rates[targetCurrency];
+    const rate = data.conversion_rates[targetCurrency];
+    
+    // Cache the successful result
+    conversionCache.set(cacheKey, rate);
+    cacheExpiry.set(cacheKey, now + CACHE_DURATION);
+    
+    // Reset failure count on success
+    apiFailureCount = 0;
+    
+    console.log(`✅ API success, rate: ${rate}`);
+    return rate;
   } catch (error) {
-    console.warn("Failed to fetch conversion rate from API, using fallback:", error);
-    return getFallbackRate(baseCurrency, targetCurrency);
+    // Track API failures
+    apiFailureCount++;
+    lastApiFailure = now;
+    
+    console.log(`❌ API failed (${apiFailureCount}/${MAX_API_FAILURES}), using fallback`);
+    const fallbackRate = getFallbackRate(baseCurrency, targetCurrency);
+    
+    // Cache the fallback rate
+    conversionCache.set(cacheKey, fallbackRate);
+    cacheExpiry.set(cacheKey, now + (CACHE_DURATION / 10)); // Shorter cache for fallback
+    
+    return fallbackRate;
   }
 }
 

@@ -4,59 +4,97 @@ type ConversionRateResponse = {
   conversion_rates: Record<string, number>;
 };
 
+// Fallback exchange rates (approximate values)
+const FALLBACK_RATES: Record<string, Record<string, number>> = {
+  USD: {
+    EUR: 0.85,
+    GBP: 0.73,
+    JPY: 110,
+    CAD: 1.25,
+    AUD: 1.35,
+    CHF: 0.92,
+    CNY: 6.45,
+    TRY: 27.5,
+    AZN: 1.7,
+  },
+  EUR: {
+    USD: 1.18,
+    GBP: 0.86,
+    JPY: 129,
+    CAD: 1.47,
+    AUD: 1.59,
+    CHF: 1.08,
+    CNY: 7.59,
+    TRY: 32.4,
+    AZN: 2.0,
+  },
+  // Add more base currencies as needed
+};
+
 export async function getConversionRate(
   baseCurrency: string,
   targetCurrency: string
 ): Promise<number> {
-  const maxRetries = 3;
-  const timeoutMs = 10000; // 10 seconds
+  console.log(`🔄 getConversionRate called with: baseCurrency='${baseCurrency}', targetCurrency='${targetCurrency}'`);
   
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      // Create AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      
-      const response = await fetch(
-        `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATES_API_KEY}/latest/${baseCurrency}`,
-        {
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-        }
-      );
-      
-      clearTimeout(timeoutId);
+  // If same currency, return 1
+  if (baseCurrency === targetCurrency) {
+    console.log(`✅ Same currency detected, returning 1`);
+    return 1;
+  }
 
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch exchange rates from API: ${response.status} ${response.statusText}`
-        );
-      }
+  // Check if API key is available
+  if (!process.env.EXCHANGE_RATES_API_KEY) {
+    console.warn("EXCHANGE_RATES_API_KEY not found, using fallback rates");
+    return getFallbackRate(baseCurrency, targetCurrency);
+  }
 
-      const data: ConversionRateResponse = await response.json();
-      
-      if (!data.conversion_rates || !data.conversion_rates[targetCurrency]) {
-        throw new Error(`Conversion rate not found for ${targetCurrency}`);
+  try {
+    const response = await fetch(
+      `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATES_API_KEY}/latest/${baseCurrency}`,
+      {
+        headers: { "Content-Type": "application/json" },
       }
+    );
 
-      return data.conversion_rates[targetCurrency];
-    } catch (error) {
-      console.error(`Failed to fetch conversion rate (attempt ${attempt}/${maxRetries}):`, error);
-      
-      // If this is the last attempt, throw the error
-      if (attempt === maxRetries) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error("Request timeout: Currency conversion service is not responding");
-        }
-        throw new Error(`Could not fetch conversion rate after ${maxRetries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-      
-      // Wait before retrying (exponential backoff)
-      const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s...
-      await new Promise(resolve => setTimeout(resolve, delay));
+    if (!response.ok) {
+      console.warn(`API request failed: ${response.status}, using fallback rates`);
+      return getFallbackRate(baseCurrency, targetCurrency);
     }
+
+    const data: ConversionRateResponse = await response.json();
+    
+    if (!data.conversion_rates || !data.conversion_rates[targetCurrency]) {
+      console.warn(`Conversion rate not found for ${targetCurrency}, using fallback`);
+      return getFallbackRate(baseCurrency, targetCurrency);
+    }
+
+    return data.conversion_rates[targetCurrency];
+  } catch (error) {
+    console.warn("Failed to fetch conversion rate from API, using fallback:", error);
+    return getFallbackRate(baseCurrency, targetCurrency);
+  }
+}
+
+function getFallbackRate(baseCurrency: string, targetCurrency: string): number {
+  // Check direct conversion
+  if (FALLBACK_RATES[baseCurrency]?.[targetCurrency]) {
+    return FALLBACK_RATES[baseCurrency][targetCurrency];
   }
   
-  // This should never be reached, but TypeScript requires it
-  throw new Error("Unexpected error: All retry attempts failed");
+  // Check reverse conversion
+  if (FALLBACK_RATES[targetCurrency]?.[baseCurrency]) {
+    return 1 / FALLBACK_RATES[targetCurrency][baseCurrency];
+  }
+  
+  // Convert through USD if neither direct conversion exists
+  if (baseCurrency !== 'USD' && targetCurrency !== 'USD') {
+    const baseToUSD = FALLBACK_RATES[baseCurrency]?.USD || (FALLBACK_RATES.USD[baseCurrency] ? 1 / FALLBACK_RATES.USD[baseCurrency] : 1);
+    const usdToTarget = FALLBACK_RATES.USD[targetCurrency] || (FALLBACK_RATES[targetCurrency]?.USD ? 1 / FALLBACK_RATES[targetCurrency].USD : 1);
+    return (1 / baseToUSD) * usdToTarget;
+  }
+  
+  // Default fallback
+  console.warn(`No conversion rate found for ${baseCurrency} to ${targetCurrency}, using 1:1`);
+  return 1;
 }

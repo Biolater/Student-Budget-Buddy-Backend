@@ -45,13 +45,16 @@ export const postAssistantStream = async (
       throw new ApiError(400, "Message is required");
     }
 
-    // Set headers for streaming
+    // Set headers for streaming (avoid overriding CORS headers)
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
+    // Hint some proxies not to buffer
+    res.setHeader('X-Accel-Buffering', 'no');
+    // Flush headers early if available
+    // @ts-ignore - not always present depending on server setup
+    if (typeof (res as any).flushHeaders === 'function') {
+      (res as any).flushHeaders();
+    }
 
     const stream = await AssistantService.generateStreamResponse(userId, message);
 

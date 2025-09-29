@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-    <img src="../frontend/banner.png" alt="Student Budget Buddy Banner" width="600" />
+    <img src="assets/sbb-banner.png" alt="Student Budget Buddy Banner" width="1200" />
 </p>
 
 <p align="center">
